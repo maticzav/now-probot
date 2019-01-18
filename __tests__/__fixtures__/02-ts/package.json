@@ -1,0 +1,15 @@
+{
+  "name": "hello-world",
+  "probot": {
+    "apps": [
+      "bot"
+    ]
+  },
+  "dependencies": {
+    "probot": "^7.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.18",
+    "typescript": "3.2.4"
+  }
+}

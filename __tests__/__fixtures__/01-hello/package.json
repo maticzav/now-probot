@@ -1,0 +1,8 @@
+{
+  "name": "hello-world",
+  "probot": {
+    "apps": [
+      "bot"
+    ]
+  }
+}
