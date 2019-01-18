@@ -16,18 +16,18 @@ jobs:
           command: yarn coverage
   publish:
     docker:
-        - image: 'circleci/node:11.3.0'
-      steps:
-        - checkout
-        - run:
-            name: install
-            command: yarn install
-        - run:
-            name: release
-            command: yarn release
+      - image: 'circleci/node:11.3.0'
+    steps:
+      - checkout
+      - run:
+          name: install
+          command: yarn install
+      - run:
+          name: release
+          command: yarn release
 workflows:
   version: 2
-  test:
+  test-and-publish:
     jobs:
       - test
       - publish:
