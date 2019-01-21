@@ -30,7 +30,7 @@
     "semantic-release": "15.13.3"
   },
   "peerDependencies": {
-    "@now/build-utils": "0.4.31"
+    "@now/build-utils": "0.4.32"
   },
   "license": "MIT"
 }
