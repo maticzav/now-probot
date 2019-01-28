@@ -59,7 +59,7 @@ try {
   probot.server.listen(bridge.port)
 } catch (err) {
   console.error(err)
-  bridge.userError = error
+  bridge.userError = err
 }
 
 exports.launcher = bridge.launcher
