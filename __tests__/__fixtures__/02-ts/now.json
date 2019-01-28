@@ -6,10 +6,17 @@
       "src": "package.json",
       "use": "now-probot",
       "config": {
-        "appId": 100,
+        "appId": "100",
         "webhookSecret": "secret",
-        "privateKey": "cert"
+        "privateKey": "-----BEGIN RSA PRIVATE KEY-----\ncert\n-----END RSA PRIVATE KEY-----"
       }
+    }
+  ],
+  "probes": [
+    {
+      "path": "/",
+      "method": "POST",
+      "mustInclude": "hey"
     }
   ]
 }

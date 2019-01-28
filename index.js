@@ -24,7 +24,7 @@ const rename = require('@now/build-utils/fs/rename')
  * @returns {Promise<Files>}
  */
 exports.build = async ({ files, entrypoint, workPath, config }) => {
-  /* Validate entrypoint */
+  /* Validate entrypoint and configuration */
 
   if (!/package\.json$/.exec(entrypoint)) {
     throw new Error(
@@ -43,7 +43,9 @@ exports.build = async ({ files, entrypoint, workPath, config }) => {
   console.log('downloading user files...')
   const downloadedFiles = await download(files, userPath)
 
-  /* Verify configuration */
+  /* Load apps */
+
+  console.log('loading apps...')
 
   const packageJsonPath = downloadedFiles['package.json'].fsPath
   const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'))
@@ -51,6 +53,34 @@ exports.build = async ({ files, entrypoint, workPath, config }) => {
   if (!packageJson.probot || !packageJson.probot.apps) {
     throw new Error('No applications found in the definition file.')
   }
+
+  const apps = packageJson.probot.apps
+
+  /**
+   * User files
+   *
+   * Filter out user files which pack the apps
+   * in the configuration.
+   */
+  const appFiles = Object.keys(downloadedFiles).filter(path =>
+    apps.some(app => new RegExp(app).exec(path)),
+  )
+
+  /**
+   * NPM modules
+   *
+   * Include the apps pointing to node_modules.
+   */
+  const appModules = apps.filter(app =>
+    Object.keys(downloadedFiles).every(path => !new RegExp(app).exec(path)),
+  )
+
+  // TODO: Check missing appModules
+
+  /**
+   * Builder should find the files for the bot and compile them.
+   * require() should be able to pick the rest from node_modules.
+   */
 
   /* Load dependenies */
 
@@ -68,7 +98,6 @@ exports.build = async ({ files, entrypoint, workPath, config }) => {
       'package.json': new FileBlob({
         data: JSON.stringify({
           dependencies: {
-            probot: '7.5.0',
             '@zeit/ncc': '0.6.0',
           },
         }),
@@ -80,21 +109,30 @@ exports.build = async ({ files, entrypoint, workPath, config }) => {
   console.log('loading ncc...')
   await runNpmInstall(nccPath, ['--prefer-offline'])
 
-  /* Compile apps with ncc */
+  /* Load probot */
 
-  /**
-   * Builder should find the files for the bot and compile them.
-   * require() should be able to pick the rest from node_modules.
-   */
+  const probotPath = path.join(workPath, 'probot')
 
-  console.log('compiling applications with ncc...')
-
-  const apps = packageJson.probot.apps
-  const appFiles = Object.keys(downloadedFiles).filter(path =>
-    apps.some(app => new RegExp(app).exec(path)),
+  console.log('writing probot package.json...')
+  await download(
+    {
+      'package.json': new FileBlob({
+        data: JSON.stringify({
+          dependencies: {
+            probot: '7.5.0',
+          },
+        }),
+      }),
+    },
+    probotPath,
   )
 
-  console.log(`compiling ${appFiles.length} probot apps`)
+  console.log('loading probot...')
+  await runNpmInstall(probotPath, ['--prefer-offline'])
+
+  /* Compiling apps */
+
+  console.log(`compiling ${appFiles.length} of ${apps.length} probot apps`)
 
   const compiledApplications = await appFiles.reduce(async (acc, app) => {
     const compiled = await compile(nccPath, downloadedFiles, app)
@@ -105,10 +143,11 @@ exports.build = async ({ files, entrypoint, workPath, config }) => {
 
   console.log(`creating launcher`)
 
-  const appModules = apps.filter(app => !appFiles.includes(app))
-
   const launcherPath = path.join(__dirname, 'launcher.js')
   let launcherData = await readFile(launcherPath, 'utf8')
+
+  const appFilesImports = appFiles.map(app => `require("./${app}")`).join(',')
+  const appModulesImports = appModules.map(app => `require("${app}")`).join(',')
 
   launcherData = launcherData.replace(
     '// PLACEHOLDER',
@@ -116,8 +155,8 @@ exports.build = async ({ files, entrypoint, workPath, config }) => {
 process.chdir("./user")
 
 apps = [
-  ${appFiles.map(app => `require("./${app}")`).join(',')},
-  ${appModules.map(app => `require("${app}")`).join(',')},
+  ${appFilesImports ? `${appFilesImports},` : ''}
+  ${appModulesImports ? `${appModulesImports},` : ''}
   require('probot/lib/apps/default'),
   require('probot/lib/apps/sentry'),
   require('probot/lib/apps/stats'),
@@ -134,7 +173,7 @@ apps = [
    * so that launcher can access all the files.
    */
 
-  const probotFiles = await glob('node_modules/probot/**', nccPath)
+  const probotFiles = await glob('node_modules/**', probotPath)
   const userNodeModulesFiles = await glob('node_modules/**', userPath)
 
   const launcherFiles = {

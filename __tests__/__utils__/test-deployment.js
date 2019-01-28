@@ -3,9 +3,17 @@ const fetch = require('node-fetch')
 const fs = require('fs-extra')
 const glob = require('util').promisify(require('glob'))
 const path = require('path')
+const mls = require('multilines')
 const { spawn } = require('child_process')
 const nowDeploy = require('./now-deploy.js')
 
+/**
+ *
+ * Packs and deploys the builder to Zeit.
+ * (Kind of works like a mock NPM registry.)
+ *
+ * @param {*} builderPath
+ */
 async function packAndDeploy(builderPath) {
   const tgzName = (await spawnAsync('npm', ['--loglevel', 'warn', 'pack'], {
     stdio: ['ignore', 'pipe', 'inherit'],
@@ -19,8 +27,18 @@ async function packAndDeploy(builderPath) {
   return url
 }
 
-async function testDeployment({ builderUrl, buildUtilsUrl }, fixturePath) {
+/**
+ *
+ * Test whether fixture builds on Now 2.0.
+ *
+ * @param {*} param0
+ * @param {*} fixturePath
+ */
+async function testDeployment({ builderUrl }, fixturePath) {
   console.log('testDeployment', fixturePath)
+
+  /* Load Virtual FS */
+
   const globResult = await glob(`${fixturePath}/**`, { nodir: true })
   const bodies = globResult.reduce((b, f) => {
     const r = path.relative(fixturePath, f)
@@ -41,25 +59,27 @@ async function testDeployment({ builderUrl, buildUtilsUrl }, fixturePath) {
     }
   }
 
+  /**
+   * Point the config to mocked registry builder
+   * published to Zeit before.
+   */
   const nowJson = JSON.parse(bodies['now.json'])
   for (const build of nowJson.builds) {
     if (builderUrl) {
       build.use = `https://${builderUrl}`
-      if (!buildUtilsUrl) {
-        build.config = build.config || {}
-        build.config.useBuildUtils = '@now/build-utils@canary'
-      }
-    }
-    if (buildUtilsUrl) {
-      if (!builderUrl) build.use = `${build.use}@canary`
       build.config = build.config || {}
-      build.config.useBuildUtils = `https://${buildUtilsUrl}`
+      build.config.useBuildUtils = '@now/build-utils@canary'
     }
   }
 
   bodies['now.json'] = Buffer.from(JSON.stringify(nowJson))
+
+  /* Deploy */
+
   const deploymentUrl = await nowDeploy(bodies, randomness)
   console.log('deploymentUrl', deploymentUrl)
+
+  /* Test probes */
 
   for (const probe of nowJson.probes) {
     console.log('testing', JSON.stringify(probe))
@@ -74,9 +94,12 @@ async function testDeployment({ builderUrl, buildUtilsUrl }, fixturePath) {
     if (probe.mustContain) {
       if (!text.includes(probe.mustContain)) {
         await fs.writeFile(path.join(__dirname, 'failed-page.txt'), text)
-        throw new Error(
-          `Fetched page ${probeUrl} does not contain ${probe.mustContain}`,
-        )
+        throw new Error(mls`
+        | Fetched page ${probeUrl} does not contain
+        | "${probe.mustContain}".
+        |
+        | It returned "${text}" instead.
+        `)
       }
     } else {
       assert(false, 'probe must have a test condition')
