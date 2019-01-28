@@ -68,8 +68,8 @@ exports.build = async ({ files, entrypoint, workPath, config }) => {
       'package.json': new FileBlob({
         data: JSON.stringify({
           dependencies: {
-            probot: '^7.5.0',
-            '@zeit/ncc': '0.1.15',
+            probot: '7.5.0',
+            '@zeit/ncc': '0.6.0',
           },
         }),
       }),
@@ -172,7 +172,9 @@ async function compile(workNccPath, downloadedFiles, entrypoint) {
 
   /* Compile */
   const ncc = require(path.join(workNccPath, 'node_modules/@zeit/ncc'))
-  const { code, assets } = await ncc(input)
+  const { code, assets } = await ncc(input, {
+    minify: true,
+  })
 
   /* Files with application blob */
   const preparedFiles = {
