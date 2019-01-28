@@ -164,6 +164,10 @@ apps = [
   return { 'index.js': lambda }
 }
 
+exports.config = {
+  maxLambdaSize: '15mb',
+}
+
 /* Helper functions */
 
 async function compile(workNccPath, downloadedFiles, entrypoint) {

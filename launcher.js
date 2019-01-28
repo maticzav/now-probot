@@ -7,7 +7,7 @@
 const { createProbot, ApplicationFunction } = require('probot')
 const { findPrivateKey } = require('probot/lib/private-key')
 const logRequestErrors = require('probot/lib/middleware/log-request-errors')
-const { Bridge } = require('./now__bridge.js')
+const { Bridge } = require('./bridge.js')
 
 /* Setup bridge */
 
@@ -17,7 +17,9 @@ bridge.port = 3000
 let apps = []
 
 try {
-  process.env.NODE_ENV = 'production'
+  if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'production'
+  }
 
   const cert = findPrivateKey()
 
@@ -43,6 +45,15 @@ try {
   probot.server.listen(bridge.port)
 } catch (err) {
   console.error(err)
+  bridge.userError = error
 }
 
 exports.launcher = bridge.launcher
+
+// const saveListen = Server.prototype.listen;
+// Server.prototype.listen = function listen(...args) {
+//   this.on('listening', function listening() {
+//     bridge.port = this.address().port;
+//   });
+//   saveListen.apply(this, args);
+// };
