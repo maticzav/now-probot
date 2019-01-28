@@ -14,7 +14,7 @@
     "release": "semantic-release"
   },
   "dependencies": {
-    "@now/node-bridge": "0.1.10-canary.2",
+    "@now/node-bridge": "0.1.10",
     "fs.promised": "3.0.0"
   },
   "devDependencies": {
