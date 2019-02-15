@@ -119,6 +119,7 @@ async function nowDeployIndexTgz(file) {
 async function fetchDeploymentUrl(url, opts) {
   for (let i = 0; i < 500; i += 1) {
     const resp = await fetch(url, opts)
+    console.log({ resp })
     if (resp.status === 200) {
       const text = await resp.text()
       if (!text.includes('Join Free')) {

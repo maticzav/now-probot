@@ -97,6 +97,7 @@ exports.build = async ({ files, entrypoint, workPath, config }) => {
     {
       'package.json': new FileBlob({
         data: JSON.stringify({
+          license: 'UNLICENSED',
           dependencies: {
             '@zeit/ncc': '0.6.0',
           },
@@ -118,6 +119,7 @@ exports.build = async ({ files, entrypoint, workPath, config }) => {
     {
       'package.json': new FileBlob({
         data: JSON.stringify({
+          license: 'UNLICENSED',
           dependencies: {
             probot: '7.5.0',
           },
@@ -221,7 +223,7 @@ async function compile(workNccPath, downloadedFiles, entrypoint) {
 
   /* Files with application blob */
   const preparedFiles = {
-    [entrypoint]: new FileBlob({ data: code }),
+    [path.join('user', entrypoint)]: new FileBlob({ data: code }),
   }
 
   /* Load remaining assets */
@@ -230,7 +232,7 @@ async function compile(workNccPath, downloadedFiles, entrypoint) {
 
     return {
       ...acc,
-      [assetPath]: new FileBlob({ data: assets[assetName] }),
+      [path.join('user', assetPath)]: new FileBlob({ data: assets[assetName] }),
     }
   }, preparedFiles)
 
