@@ -31,10 +31,10 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@now/node-bridge@^0.1.10":
-  version "0.1.10"
-  resolved "https://registry.yarnpkg.com/@now/node-bridge/-/node-bridge-0.1.10.tgz#f2a719f33ee838f1bd9341ee9b18847827386a94"
-  integrity sha512-Xdi2g89af8+VN7Agjm/Mzy5SGnKPN0xyGdo+htlzsylWaDBDYggTzReSi16SWt3Jn1mYs0/NqebStawT7Kmc+g==
+"@now/node-bridge@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@now/node-bridge/-/node-bridge-1.0.0.tgz#3e7c1cd5760dc681febb4689201bbea6fdd35230"
+  integrity sha512-tHcr0GlgNlE8ucjuw4w7mseJ68R4VkxuHbFQpSUJ5cZqTJbKggtsdv9UL3u5uBJBXgqDmidlEepF3wOm7A99IQ==
 
 "@octokit/endpoint@^3.1.1":
   version "3.1.1"
